@@ -21,7 +21,7 @@ body {
 h1 {
   text-align: center;
   color: #1976d2;
-  margin: 5px 0 10px 0; /* ลด margin-top เหลือ 5px */
+  margin: 5px 0 10px 0; /* ขยับขึ้นใกล้ขอบบน */
 }
 .card {
   background: #fff;
@@ -61,17 +61,18 @@ th {
   color: #1565c0;
   font-weight: 600;
 }
-tbody tr:nth-child(even) { background-color: #f9f9f9; } 
+/* ลบการสลับสี */
+tbody tr:nth-child(even) { background-color: inherit; }
 
 /* 🎨 สีพื้นหลังของแต่ละกลุ่มวิชา */
-tr.basic { background-color: #f0f9ff; }       /* ฟ้าอ่อน */
-tr.additional { background-color: #fff0f6; }  /* ชมพูอ่อน */
-tr.total-row { background-color: #e1f5fe; font-weight: 600; }
+tr.basic { background-color: #d0f0ff; }       /* ฟ้าอ่อน */
+tr.additional { background-color: #d0ffd0; }  /* เขียวอ่อน */
+tr.total-row { background-color: #ffd0d0; font-weight: 600; }
 
 footer {
   text-align: center;
   color: #888;
-  margin: 5px 0;
+  margin: 2px 0 5px 0; /* ขยับขึ้น */
   font-size: 14px;
 }
 .loading {
@@ -278,4 +279,3 @@ loadStudents();
 </script>
 </body>
 </html>
-
