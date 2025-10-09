@@ -21,7 +21,7 @@ body {
 h1 {
   text-align: center;
   color: #1976d2;
-  margin: 5px 0 10px 0; /* ขยับขึ้นใกล้ขอบบน */
+  margin: 5px 0 10px 0;
 }
 .card {
   background: #fff;
@@ -61,10 +61,8 @@ th {
   color: #1565c0;
   font-weight: 600;
 }
-/* ลบการสลับสี */
-tbody tr:nth-child(even) { background-color: inherit; }
 
-/* 🎨 สีพื้นหลังของแต่ละกลุ่มวิชา */
+/* สีพื้นหลังตามกลุ่มวิชา */
 tr.basic { background-color: #d0f0ff; }       /* ฟ้าอ่อน */
 tr.additional { background-color: #d0ffd0; }  /* เขียวอ่อน */
 tr.total-row { background-color: #ffd0d0; font-weight: 600; }
@@ -72,7 +70,7 @@ tr.total-row { background-color: #ffd0d0; font-weight: 600; }
 footer {
   text-align: center;
   color: #888;
-  margin: 2px 0 5px 0; /* ขยับขึ้น */
+  margin: 2px 0 5px 0;
   font-size: 14px;
 }
 .loading {
@@ -90,7 +88,7 @@ footer {
 }
 @media (max-width: 600px) {
   h1 { font-size: 18px; }
-  table { font-size: 12.5px; }
+  table { font-size: 12px; }
   .card { padding: 10px; }
 }
 </style>
@@ -127,7 +125,7 @@ footer {
 
 <script>
 // ------------------------------
-// 🧾 ตั้งค่า Spreadsheet
+// ตั้งค่า Spreadsheet
 // ------------------------------
 const SHEET_ID = "1YcnivQbDMhI_eDsbZc7jmu-gj8d9w-IfSFWLopDZ36E";
 const BASE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=`;
@@ -153,7 +151,7 @@ const studentSelect = document.getElementById("studentSelect");
 const tableBody = document.querySelector("#scoreTable tbody");
 
 // ------------------------------
-// 🧮 ฟังก์ชันคำนวณเกรด
+// ฟังก์ชันคำนวณเกรด
 // ------------------------------
 function getGradePoint(score){
   if(score>=80) return 4;
@@ -167,7 +165,7 @@ function getGradePoint(score){
 }
 
 // ------------------------------
-// 📘 โหลดรายชื่อนักเรียน (เริ่มจากแถวที่ 5)
+// โหลดรายชื่อนักเรียน (slice(1))
 // ------------------------------
 async function loadStudents(){
   const res = await fetch(BASE_URL + "Sheet1");
@@ -175,7 +173,6 @@ async function loadStudents(){
   const json = JSON.parse(text.substr(47).slice(0, -2));
   const rows = json.table.rows;
 
-  // ข้าม 4 แถวแรก (หัวตาราง) → เริ่มแถวที่ 5
   const students = rows.slice(1).map(r => ({
     id: r.c[0]?.v || "",
     name: (r.c[1]?.v || "") + " " + (r.c[2]?.v || "")
@@ -193,7 +190,7 @@ async function loadStudents(){
 }
 
 // ------------------------------
-// 📗 โหลดคะแนนจากชีตวิชา (เริ่มจากแถวที่ 5)
+// โหลดคะแนนจากชีตวิชา (slice(1))
 // ------------------------------
 async function getSubjectScores(sheetName){
   const res = await fetch(BASE_URL + sheetName);
@@ -212,7 +209,7 @@ async function getSubjectScores(sheetName){
 }
 
 // ------------------------------
-// 🧡 เมื่อเลือกนักเรียน
+// เมื่อเลือกนักเรียน
 // ------------------------------
 studentSelect.addEventListener("change", async ()=>{
   const studentID = studentSelect.value;
@@ -273,7 +270,7 @@ studentSelect.addEventListener("change", async ()=>{
 });
 
 // ------------------------------
-// 🚀 เริ่มโหลดรายชื่อ
+// เริ่มโหลดรายชื่อ
 // ------------------------------
 loadStudents();
 </script>
