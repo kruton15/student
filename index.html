@@ -175,7 +175,7 @@ async function loadStudents(){
   const rows = json.table.rows;
 
   // ข้าม 4 แถวแรก (หัวตาราง) → เริ่มแถวที่ 5
-  const students = rows.slice(4).map(r => ({
+  const students = rows.slice(1).map(r => ({
     id: r.c[0]?.v || "",
     name: (r.c[1]?.v || "") + " " + (r.c[2]?.v || "")
   }));
@@ -201,7 +201,7 @@ async function getSubjectScores(sheetName){
   const rows = json.table.rows;
 
   let data = {};
-  rows.slice(4).forEach(r=>{
+  rows.slice(1).forEach(r=>{
     const id = r.c[0]?.v;
     const sem1 = r.c[5]?.v || 0;
     const sem2 = r.c[8]?.v || 0;
@@ -278,3 +278,4 @@ loadStudents();
 </script>
 </body>
 </html>
+
