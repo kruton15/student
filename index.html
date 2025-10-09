@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ผลการเรียนของนักเรียน</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body {
+  font-family: 'Sarabun', sans-serif;
+  background: linear-gradient(180deg, #dff3ff 0%, #fff 100%);
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+.container {
+  max-width: 750px;
+  margin: 5px auto;
+  padding: 10px;
+}
+h1 {
+  text-align: center;
+  color: #1976d2;
+  margin-bottom: 10px;
+}
+.card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 15px;
+  margin-bottom: 15px;
+}
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+.table-container { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  animation: fadeIn 0.8s ease-in-out;
+}
+th, td {
+  border-bottom: 1px solid #eee;
+  padding: 6px;
+  text-align: center;
+  white-space: nowrap;
+}
+td:first-child { text-align: left; padding-left: 10px; }
+th {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  font-weight: 600;
+}
+tbody tr:nth-child(even) { background-color: #f9f9f9; } 
+
+/* 🎨 สีพื้นหลังของแต่ละกลุ่มวิชา */
+tr.basic { background-color: #f0f9ff; }       /* ฟ้าอ่อน */
+tr.additional { background-color: #fff0f6; }  /* ชมพูอ่อน */
+tr.total-row { background-color: #e1f5fe; font-weight: 600; }
+
+footer {
+  text-align: center;
+  color: #888;
+  margin: 5px 0;
+  font-size: 14px;
+}
+.loading {
+  text-align: center;
+  color: #777;
+  font-size: 15px;
+  animation: blink 1.2s infinite;
+}
+@keyframes blink {
+  50% { opacity: 0.5; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 600px) {
+  h1 { font-size: 18px; }
+  table { font-size: 12.5px; }
+  .card { padding: 10px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>ผลการเรียนของนักเรียน</h1>
+
+  <div class="card">
+    <label for="studentSelect">😽 เลือกชื่อนักเรียน:</label>
+    <select id="studentSelect">
+      <option>-- กำลังโหลดรายชื่อนักเรียน --</option>
+    </select>
+  </div>
+
+  <div class="card table-container">
+    <table id="scoreTable">
+      <thead>
+        <tr>
+          <th>📚 รายวิชา</th>
+          <th>💯 ภาค1</th>
+          <th>💯 ภาค2</th>
+          <th>💡 เฉลี่ย</th>
+          <th>⭐ เกรด</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="5" class="loading">กรุณาเลือกชื่อนักเรียน</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<footer>จัดทำโดยครูต้น 🍀</footer>
+
+<script>
+// ------------------------------
+// 🧾 ตั้งค่า Spreadsheet
+// ------------------------------
+const SHEET_ID = "1YcnivQbDMhI_eDsbZc7jmu-gj8d9w-IfSFWLopDZ36E";
+const BASE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=`;
+
+// รายชื่อวิชา
+const subjectsBasic = [
+  ["ภาษาไทย","ท",4],
+  ["คณิตศาสตร์","ค",4],
+  ["วิทยาศาสตร์ฯ","ว",3],
+  ["สังคมศึกษาฯ","ส",2],
+  ["ประวัติศาสตร์","ป",1],
+  ["สุขศึกษาฯ","พ",2],
+  ["ศิลปะ","ศ",2],
+  ["การงานอาชีพ","ง",1],
+  ["ภาษาอังกฤษ","อ",2]
+];
+const subjectsExtra = [
+  ["การป้องกันฯ","ปก",1],
+  ["สร้างสรรค์ฯ","สส",1]
+];
+
+const studentSelect = document.getElementById("studentSelect");
+const tableBody = document.querySelector("#scoreTable tbody");
+
+// ------------------------------
+// 🧮 ฟังก์ชันคำนวณเกรด
+// ------------------------------
+function getGradePoint(score){
+  if(score>=80) return 4;
+  if(score>=75) return 3.5;
+  if(score>=70) return 3;
+  if(score>=65) return 2.5;
+  if(score>=60) return 2;
+  if(score>=55) return 1.5;
+  if(score>=50) return 1;
+  return 0;
+}
+
+// ------------------------------
+// 📘 โหลดรายชื่อนักเรียน (ชีตแรก)
+// ------------------------------
+async function loadStudents(){
+  const res = await fetch(BASE_URL + "Sheet1");
+  const text = await res.text();
+  const json = JSON.parse(text.substr(47).slice(0, -2));
+  const rows = json.table.rows;
+
+  const students = rows.slice(4).map(r => ({
+    id: r.c[0]?.v || "",
+    name: (r.c[1]?.v || "") + " " + (r.c[2]?.v || "")
+  }));
+
+  studentSelect.innerHTML = '<option>-- เลือกชื่อนักเรียน --</option>';
+  students.forEach(st => {
+    const opt = document.createElement("option");
+    opt.value = st.id;
+    opt.textContent = st.name;
+    studentSelect.appendChild(opt);
+  });
+
+  return students;
+}
+
+// ------------------------------
+// 📗 โหลดคะแนนจากชีตวิชา
+// ------------------------------
+async function getSubjectScores(sheetName){
+  const res = await fetch(BASE_URL + sheetName);
+  const text = await res.text();
+  const json = JSON.parse(text.substr(47).slice(0, -2));
+  const rows = json.table.rows;
+
+  let data = {};
+  rows.slice(4).forEach(r=>{
+    const id = r.c[0]?.v;
+    const sem1 = r.c[5]?.v || 0;
+    const sem2 = r.c[8]?.v || 0;
+    if(id) data[id] = [sem1, sem2];
+  });
+  return data;
+}
+
+// ------------------------------
+// 🧡 เมื่อเลือกนักเรียน
+// ------------------------------
+studentSelect.addEventListener("change", async ()=>{
+  const studentID = studentSelect.value;
+  if(!studentID || studentID.includes("เลือก")) return;
+
+  tableBody.innerHTML = "<tr><td colspan='5' class='loading'>⏳ กำลังโหลดข้อมูล...</td></tr>";
+
+  const allSubjects = [...subjectsBasic, ...subjectsExtra];
+  const allData = {};
+  for(let [_, sheet] of allSubjects){
+    allData[sheet] = await getSubjectScores(sheet);
+  }
+
+  tableBody.innerHTML = "";
+
+  let totalWeight=0, totalWeightedGrade=0;
+  let avgSem1=0, avgSem2=0, avgYear=0, count=0;
+
+  function renderRow(subj, sheet, weight, type){
+    const scores = allData[sheet][studentID] || [0,0];
+    const [s1,s2] = scores;
+    const avg = ((s1+s2)/2).toFixed(2);
+    const grade = getGradePoint(avg);
+    totalWeight += weight;
+    totalWeightedGrade += grade * weight;
+    avgSem1 += s1; avgSem2 += s2; avgYear += parseFloat(avg); count++;
+
+    const tr = document.createElement("tr");
+    tr.className = type;
+    tr.innerHTML = `
+      <td>${subj}</td>
+      <td>${s1}</td>
+      <td>${s2}</td>
+      <td>${avg}</td>
+      <td>${grade.toFixed(1)}</td>
+    `;
+    tableBody.appendChild(tr);
+  }
+
+  subjectsBasic.forEach(([s,sheet,w])=>renderRow(s,sheet,w,"basic"));
+  subjectsExtra.forEach(([s,sheet,w])=>renderRow(s,sheet,w,"additional"));
+
+  const avg1=(avgSem1/count).toFixed(2);
+  const avg2=(avgSem2/count).toFixed(2);
+  const avgY=(avgYear/count).toFixed(2);
+  const avgGrade=(totalWeightedGrade/totalWeight).toFixed(2);
+
+  const trTotal=document.createElement("tr");
+  trTotal.className="total-row";
+  trTotal.innerHTML=`
+    <td>รวมเฉลี่ย</td>
+    <td>${avg1}</td>
+    <td>${avg2}</td>
+    <td>${avgY}</td>
+    <td>${avgGrade}</td>
+  `;
+  tableBody.appendChild(trTotal);
+});
+
+// ------------------------------
+// 🚀 เริ่มโหลดรายชื่อ
+// ------------------------------
+loadStudents();
+</script>
+</body>
+</html>
