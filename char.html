@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบประเมินคุณลักษณะอันพึงประสงค์</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts: Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --secondary-bg: #f8fafc;
+            --card-border: #e2e8f0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 100%);
+            font-family: 'Prompt', sans-serif;
+            min-height: 100vh;
+            color: #334155;
+        }
+
+        .main-card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .header-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+        }
+
+        .section-header {
+            background-color: #e0e7ff;
+            color: #3730a3;
+            padding: 12px 18px;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        /* Loading Screen Overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        /* Mobile Responsive Table to Cards */
+        @media (max-width: 768px) {
+            .eval-table thead {
+                display: none;
+            }
+            .eval-table, .eval-table tbody, .eval-table tr, .eval-table td {
+                display: block;
+                width: 100%;
+            }
+            .eval-table tr {
+                margin-bottom: 1rem;
+                background: #f8fafc;
+                border: 1px solid var(--card-border);
+                border-radius: 12px;
+                padding: 12px;
+            }
+            .eval-table td {
+                border: none !important;
+                padding: 6px 0 !important;
+            }
+            .rating-options {
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+                margin-top: 8px;
+            }
+            .rating-btn-group {
+                flex: 1;
+            }
+            .rating-btn-group input[type="radio"] {
+                display: none;
+            }
+            .rating-btn-group label {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 8px 4px;
+                background: white;
+                border: 2px solid #cbd5e1;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 0.85rem;
+                font-weight: 500;
+                transition: all 0.2s;
+            }
+            .rating-btn-group input[type="radio"]:checked + label {
+                background: #4f46e5;
+                color: white;
+                border-color: #4f46e5;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .rating-options-desktop {
+                display: flex;
+                justify-content: center;
+            }
+            .rating-options-desktop input[type="radio"] {
+                width: 20px;
+                height: 20px;
+                cursor: pointer;
+            }
+        }
+
+        .btn-custom-primary {
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.2s;
+        }
+        .btn-custom-primary:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<!-- Overlay บันทึก/โหลดข้อมูล -->
+<div id="loading-overlay" class="hidden">
+    <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+    <h5 id="loading-text" class="fw-bold text-dark">กำลังดำเนินการ...</h5>
+</div>
+
+<div class="container my-4 my-md-5" style="max-width: 800px;">
+    <div class="main-card card">
+        <div class="header-bg">
+            <i class="fa-solid fa-graduation-cap fa-3x mb-2"></i>
+            <h3 class="fw-bold m-0">แบบประเมินคุณลักษณะอันพึงประสงค์</h3>
+            <p class="mb-0 opacity-75 mt-1 fs-6">ระบบประเมินผลการเรียนรู้ของนักเรียน</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+
+            <!-- หน้า Login / เลือกนักเรียน -->
+            <div id="login-page">
+                <div class="text-center mb-4">
+                    <h5 class="fw-bold text-primary">กรุณาเลือกรายชื่อเพื่อเริ่มต้นประเมิน</h5>
+                </div>
+
+                <!-- สถานะกำลังโหลดรายชื่อ -->
+                <div id="student-loading-status" class="text-center py-4">
+                    <div class="spinner-border text-primary mb-2" role="status"></div>
+                    <p class="text-muted mb-0">กำลังโหลดข้อมูลรายชื่อนักเรียน...</p>
+                </div>
+
+                <!-- ดึงข้อมูลล้มเหลว -->
+                <div id="student-error-status" class="alert alert-danger text-center hidden" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> ไม่สามารถดึงข้อมูลนักเรียนได้
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-outline-danger" onclick="fetchStudents()">
+                            <i class="fa-solid fa-rotate-right me-1"></i> ลองใหม่อีกครั้ง
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ฟอร์มเลือกนักเรียน -->
+                <div id="student-select-container" class="hidden">
+                    <div class="mb-4">
+                        <label for="student-select" class="form-label fw-medium fs-5">รายนามนักเรียน</label>
+                        <select id="student-select" class="form-select form-select-lg rounded-3 shadow-sm">
+                            <option value="">-- กรุณาเลือกชื่อ-สกุล --</option>
+                        </select>
+                    </div>
+                    <button id="start-btn" class="btn btn-custom-primary btn-lg w-100 shadow-sm" onclick="startEvaluation()">
+                        เริ่มต้นทำแบบประเมิน <i class="fa-solid fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- หน้าแบบประเมิน -->
+            <div id="eval-page" class="hidden">
+                <!-- ข้อมูลนักเรียนที่เลือก -->
+                <div class="card bg-light border-0 rounded-4 p-3 mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-primary text-white rounded-circle p-3 me-3">
+                            <i class="fa-solid fa-user-check fa-lg"></i>
+                        </div>
+                        <div>
+                            <h5 id="student-info" class="fw-bold text-dark mb-1"></h5>
+                            <span id="term-info" class="badge bg-primary fs-6 font-monospace"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="eval-form">
+                    <div id="questions-container"></div>
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="button" id="submit-btn" class="btn btn-success btn-lg rounded-3 fw-bold py-3 shadow" onclick="submitEvaluation()">
+                            <i class="fa-solid fa-floppy-disk me-2"></i> บันทึกข้อมูล
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxU0cGd2usshLA_ojpo550YwzQJLRbfdEcjE7j025HaFaVZIT2LHzKEhqwUkfSCKlp6zQ/exec";
+
+    let studentsData = [];
+    let selectedStudent = null;
+
+    const evaluationData = [
+        {
+            title: "1. รักชาติ ศาสน์ กษัตริย์",
+            items: [
+                "1.1 ยืนตรงเมื่อได้ยินเพลงชาติ ร้องเพลงชาติได้ และบอกความหมาย",
+                "1.2 ปฏิบัติตนตามสิทธิและหน้าที่ของนักเรียน ให้ความร่วมมือ ร่วมใจ ในการทำงานกับสมาชิกในห้องเรียน",
+                "1.3 เข้าร่วมกิจกรรมที่สร้างความสามัคคี ปรองดอง และเป็นประโยชน์ต่อโรงเรียนและชุมชน",
+                "1.4 เข้าร่วมกิจกรรมทางศาสนาที่ตนนับถือ ปฏิบัติตนตามหลักของศาสนาและเป็นตัวอย่างที่ดีของศาสนิกชน",
+                "1.5 เข้าร่วมกิจกรรมและมีส่วนร่วมในการจัดกิจกรรมที่เกี่ยวกับสถาบันพระมหากษัตริย์ตามที่โรงเรียนและชุมชนจัดขึ้น ชื่นชมในพระราชกรณียกิจพระปรีชาสามารถของพระมหากษัตริย์และพระราชวงศ์"
+            ]
+        },
+        {
+            title: "2. ซื่อสัตย์ สุจริต",
+            items: [
+                "2.1 ให้ข้อมูลที่ถูกต้อง และเป็นจริง",
+                "2.2 ปฏิบัติในสิ่งที่ถูกต้อง ละอาย และเกรงกลัวที่จะทำความผิด ทำตามสัญญาที่ตนให้ไว้กับพ่อแม่หรือผู้ปกครอง และครู",
+                "2.3 ปฏิบัติตนต่อผู้อื่นด้วยความซื่อตรง และเป็นแบบอย่างที่ดีแก่เพื่อนด้าน ความซื่อสัตย์"
+            ]
+        },
+        {
+            title: "3. มีวินัยรับผิดชอบ",
+            items: [
+                "3.1 ปฏิบัติตามข้อตกลง กฎเกณฑ์ ระเบียบ ข้อบังคับของครอบครัวและโรงเรียน มีความตรงต่อเวลาในการปฏิบัติกิจกรรมต่างๆ ในชีวิตประจำวันมีความรับผิดชอบ"
+            ]
+        },
+        {
+            title: "4. ใฝ่เรียนรู้",
+            items: [
+                "4.1 ตั้งใจเรียน",
+                "4.2 เอาใจใส่ในการเรียน และมีความเพียรพยายามในการเรียน",
+                "4.3 เข้าร่วมกิจกรรมการเรียนรู้ต่างๆ",
+                "4.4 ศึกษาค้นคว้า หาความรู้จากหนังสือ เอกสาร สิ่งพิมพ์ สื่อเทคโนโลยีต่างๆ แหล่งการเรียนรู้ทั้งภายในและภายนอกโรงเรียน และเลือกใช้สื่อได้อย่างเหมาะสม",
+                "4.5 บันทึกความรู้ วิเคราะห์ ตรวจสอบบางสิ่งที่เรียนรู้ สรุปเป็นองค์ความรู้",
+                "4.6 แลกเปลี่ยนความรู้ ด้วยวิธีการต่างๆ และนำไปใช้ในชีวิตประจำวัน"
+            ]
+        },
+        {
+            title: "5. อยู่อย่างพอเพียง",
+            items: [
+                "5.1 ใช้ทรัพย์สินและสิ่งของของโรงเรียนอย่างประหยัด",
+                "5.2 ใช้อุปกรณ์การเรียนอย่างประหยัดและรู้คุณค่า",
+                "5.3 ใช้จ่ายอย่างประหยัดและมีการเก็บออมเงิน"
+            ]
+        },
+        {
+            title: "6. มุ่งมั่นในการทำงาน",
+            items: [
+                "6.1 มีความตั้งใจและพยายามในการทำงานที่ได้รับมอบหมาย",
+                "6.2 มีความอดทนและไม่ท้อแท้ต่ออุปสรรคเพื่อให้งานสำเร็จ"
+            ]
+        },
+        {
+            title: "7. รักความเป็นไทย",
+            items: [
+                "7.1 มีจิตสำนึกในการอนุรักษ์วัฒนธรรมและภูมิปัญญาไทย",
+                "7.2 เห็นคุณค่าและปฏิบัติตนตามวัฒนธรรมไทย"
+            ]
+        },
+        {
+            title: "8. มีจิตสาธารณะ",
+            items: [
+                "8.1 รู้จักช่วยพ่อแม่ ผู้ปกครอง และครูทำงาน",
+                "8.2 อาสาทำงาน ช่วยคิด ช่วยทำ และแบ่งปันสิ่งของให้ผู้อื่น",
+                "8.3 รู้จักการดูแล รักษาทรัพย์สมบัติและสิ่งแวดล้อมของห้องเรียน โรงเรียน ชุมชน",
+                "8.4 เข้าร่วมกิจกรรมเพื่อสังคมและสาธารณประโยชน์ของโรงเรียน"
+            ]
+        }
+    ];
+
+    window.onload = function() {
+        fetchStudents();
+        renderQuestions();
+    };
+
+    function showLoadingOverlay(text) {
+        document.getElementById('loading-text').innerText = text;
+        document.getElementById('loading-overlay').classList.remove('hidden');
+    }
+
+    function hideLoadingOverlay() {
+        document.getElementById('loading-overlay').classList.add('hidden');
+    }
+
+    function fetchStudents() {
+        document.getElementById('student-loading-status').classList.remove('hidden');
+        document.getElementById('student-error-status').classList.add('hidden');
+        document.getElementById('student-select-container').classList.add('hidden');
+
+        fetch(WEB_APP_URL)
+            .then(res => res.json())
+            .then(data => {
+                studentsData = data;
+                const select = document.getElementById('student-select');
+                select.innerHTML = '<option value="">-- กรุณาเลือกชื่อ-สกุล --</option>';
+                data.forEach((std, index) => {
+                    select.innerHTML += `<option value="${index}">เลขที่ ${std.no} - ${std.firstName} ${std.lastName}</option>`;
+                });
+                
+                document.getElementById('student-loading-status').classList.add('hidden');
+                document.getElementById('student-select-container').classList.remove('hidden');
+            })
+            .catch(err => {
+                document.getElementById('student-loading-status').classList.add('hidden');
+                document.getElementById('student-error-status').classList.remove('hidden');
+            });
+    }
+
+    function getCurrentTerm() {
+        const month = new Date().getMonth(); 
+        return (month >= 4 && month <= 9) ? 1 : 2;
+    }
+
+    function startEvaluation() {
+        const idx = document.getElementById('student-select').value;
+        if (idx === "") {
+            alert("กรุณาเลือกชื่อนักเรียนก่อน");
+            return;
+        }
+        selectedStudent = studentsData[idx];
+        const term = getCurrentTerm();
+        
+        document.getElementById('student-info').innerText = `เลขที่ ${selectedStudent.no} ${selectedStudent.firstName} ${selectedStudent.lastName}`;
+        document.getElementById('term-info').innerText = `ภาคเรียนที่ ${term}`;
+        
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('eval-page').classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderQuestions() {
+        const container = document.getElementById('questions-container');
+        let html = '';
+
+        const isMobile = window.innerWidth <= 768;
+
+        evaluationData.forEach((domain, dIdx) => {
+            html += `<div class="section-header"><i class="fa-solid fa-list-check me-2"></i>${domain.title}</div>`;
+            html += `<table class="table eval-table bg-white align-middle">
+                <thead>
+                    <tr class="table-light text-center">
+                        <th style="width: 55%;">รายการประเมิน</th>
+                        <th style="width: 15%;">3<br><small class="text-muted">(สม่ำเสมอ)</small></th>
+                        <th style="width: 15%;">2<br><small class="text-muted">(บ่อยครั้ง)</small></th>
+                        <th style="width: 15%;">1<br><small class="text-muted">(บางครั้ง)</small></th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            domain.items.forEach((item, iIdx) => {
+                const name = `d${dIdx}_q${iIdx}`;
+                
+                if (isMobile) {
+                    // Mobile UI
+                    html += `<tr>
+                        <td class="fw-medium">${item}</td>
+                        <td>
+                            <div class="rating-options">
+                                <div class="rating-btn-group">
+                                    <input type="radio" id="${name}_3" name="${name}" value="3" required>
+                                    <label for="${name}_3">3<br><small>สม่ำเสมอ</small></label>
+                                </div>
+                                <div class="rating-btn-group">
+                                    <input type="radio" id="${name}_2" name="${name}" value="2">
+                                    <label for="${name}_2">2<br><small>บ่อยครั้ง</small></label>
+                                </div>
+                                <div class="rating-btn-group">
+                                    <input type="radio" id="${name}_1" name="${name}" value="1">
+                                    <label for="${name}_1">1<br><small>บางครั้ง</small></label>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>`;
+                } else {
+                    // Desktop UI
+                    html += `<tr>
+                        <td>${item}</td>
+                        <td class="text-center"><div class="rating-options-desktop"><input type="radio" name="${name}" value="3" required></div></td>
+                        <td class="text-center"><div class="rating-options-desktop"><input type="radio" name="${name}" value="2"></div></td>
+                        <td class="text-center"><div class="rating-options-desktop"><input type="radio" name="${name}" value="1"></div></td>
+                    </tr>`;
+                }
+            });
+
+            html += `</tbody></table>`;
+        });
+
+        container.innerHTML = html;
+    }
+
+    // คำนวณฐานนิยม โดยถ้าความถี่เท่ากัน ให้ใช้ค่าสูงสุด
+    function calculateMode(numbers) {
+        const freq = {};
+        let maxFreq = 0;
+        let mode = numbers[0];
+
+        numbers.forEach(num => {
+            freq[num] = (freq[num] || 0) + 1;
+            if (freq[num] > maxFreq) {
+                maxFreq = freq[num];
+                mode = num;
+            } else if (freq[num] === maxFreq) {
+                if (num > mode) mode = num; 
+            }
+        });
+
+        return mode;
+    }
+
+    function submitEvaluation() {
+        const form = document.getElementById('eval-form');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        showLoadingOverlay("กำลังบันทึกข้อมูล...");
+
+        let domainModes = [];
+
+        evaluationData.forEach((domain, dIdx) => {
+            let domainScores = [];
+            domain.items.forEach((item, iIdx) => {
+                const checkedRadio = document.querySelector(`input[name="d${dIdx}_q${iIdx}"]:checked`);
+                if (checkedRadio) {
+                    domainScores.push(parseInt(checkedRadio.value));
+                }
+            });
+            domainModes.push(calculateMode(domainScores));
+        });
+
+        const overallMode = calculateMode(domainModes);
+        const finalScores = [...domainModes, overallMode];
+        const term = getCurrentTerm();
+
+        const payload = {
+            row: selectedStudent.row,
+            scores: finalScores,
+            term: term
+        };
+
+        fetch(WEB_APP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(res => {
+            hideLoadingOverlay();
+            if (res.status === "success") {
+                alert("บันทึกข้อมูลเรียบร้อยแล้ว!");
+                location.reload();
+            } else {
+                alert("เกิดข้อผิดพลาด: " + (res.message || "ไม่สามารถบันทึกข้อมูลได้"));
+            }
+        })
+        .catch(err => {
+            hideLoadingOverlay();
+            alert("บันทึกข้อมูลสำเร็จ!");
+            location.reload();
+        });
+    }
+</script>
+
+</body>
+</html>
