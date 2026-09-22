@@ -6,7 +6,7 @@
     <title>แบบประเมินคุณลักษณะอันพึงประสงค์</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome for Icons -->
+    <!-- FontAwesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Google Fonts: Prompt -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -163,7 +163,7 @@
         <div class="header-bg">
             <i class="fa-solid fa-graduation-cap fa-3x mb-2"></i>
             <h3 class="fw-bold m-0">แบบประเมินคุณลักษณะอันพึงประสงค์</h3>
-            <p class="mb-0 opacity-75 mt-1 fs-6">ระบบประเมินผลการเรียนรู้ของนักเรียน</p>
+            <p class="mb-0 opacity-75 mt-1 fs-6">สำหรับนักเรียนเป็นผู้ประเมิน</p>
         </div>
 
         <div class="card-body p-4 p-md-5">
@@ -177,7 +177,7 @@
                 <!-- สถานะกำลังโหลดรายชื่อ -->
                 <div id="student-loading-status" class="text-center py-4">
                     <div class="spinner-border text-primary mb-2" role="status"></div>
-                    <p class="text-muted mb-0">กำลังโหลดข้อมูลรายชื่อนักเรียน...</p>
+                    <p class="text-muted mb-0">กำลังโหลดข้อมูลรายชื่อนักเรียน</p>
                 </div>
 
                 <!-- ดึงข้อมูลล้มเหลว -->
@@ -237,6 +237,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+    // ** ใส่ Web App URL ของคุณที่ได้จากการ Deploy GAS **
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxU0cGd2usshLA_ojpo550YwzQJLRbfdEcjE7j025HaFaVZIT2LHzKEhqwUkfSCKlp6zQ/exec";
 
     let studentsData = [];
@@ -350,7 +351,7 @@
     }
 
     function getCurrentTerm() {
-        const month = new Date().getMonth(); 
+        const month = new Date().getMonth(); // 0 = ม.ค., 4 = พ.ค., 9 = ต.ค., 10 = พ.ย.
         return (month >= 4 && month <= 9) ? 1 : 2;
     }
 
@@ -364,7 +365,7 @@
         const term = getCurrentTerm();
         
         document.getElementById('student-info').innerText = `เลขที่ ${selectedStudent.no} ${selectedStudent.firstName} ${selectedStudent.lastName}`;
-        document.getElementById('term-info').innerText = `ภาคเรียนที่ ${term}`;
+        document.getElementById('term-info').innerText = `ประเมินภาคเรียนที่ ${term}`;
         
         document.getElementById('login-page').classList.add('hidden');
         document.getElementById('eval-page').classList.remove('hidden');
@@ -394,7 +395,6 @@
                 const name = `d${dIdx}_q${iIdx}`;
                 
                 if (isMobile) {
-                    // Mobile UI
                     html += `<tr>
                         <td class="fw-medium">${item}</td>
                         <td>
@@ -415,7 +415,6 @@
                         </td>
                     </tr>`;
                 } else {
-                    // Desktop UI
                     html += `<tr>
                         <td>${item}</td>
                         <td class="text-center"><div class="rating-options-desktop"><input type="radio" name="${name}" value="3" required></div></td>
@@ -431,7 +430,7 @@
         container.innerHTML = html;
     }
 
-    // คำนวณฐานนิยม โดยถ้าความถี่เท่ากัน ให้ใช้ค่าสูงสุด
+    // คำนวณฐานนิยม โดยหากความถี่เท่ากัน จะใช้ค่าสูงสุด
     function calculateMode(numbers) {
         const freq = {};
         let maxFreq = 0;
@@ -457,29 +456,33 @@
             return;
         }
 
-        showLoadingOverlay("กำลังบันทึกข้อมูล...");
+        const term = getCurrentTerm();
+        showLoadingOverlay(`กำลังบันทึกข้อมูล...`);
 
-        let domainModes = [];
+        let rawScores = [];   // เก็บผลประเมินรายข้อทั้งหมด 26 ข้อ (สำหรับ Col 4-29)
+        let domainModes = []; // เก็บค่าฐานนิยมแยก 8 ด้าน (สำหรับ Col 30-37)
 
         evaluationData.forEach((domain, dIdx) => {
             let domainScores = [];
             domain.items.forEach((item, iIdx) => {
                 const checkedRadio = document.querySelector(`input[name="d${dIdx}_q${iIdx}"]:checked`);
                 if (checkedRadio) {
-                    domainScores.push(parseInt(checkedRadio.value));
+                    const score = parseInt(checkedRadio.value);
+                    rawScores.push(score);
+                    domainScores.push(score);
                 }
             });
             domainModes.push(calculateMode(domainScores));
         });
 
-        const overallMode = calculateMode(domainModes);
-        const finalScores = [...domainModes, overallMode];
-        const term = getCurrentTerm();
+        const overallMode = calculateMode(domainModes); // ฐานนิยมภาพรวม (สำหรับ Col 38)
 
         const payload = {
             row: selectedStudent.row,
-            scores: finalScores,
-            term: term
+            term: term,
+            rawScores: rawScores,
+            domainModes: domainModes,
+            overallMode: overallMode
         };
 
         fetch(WEB_APP_URL, {
@@ -491,7 +494,7 @@
         .then(res => {
             hideLoadingOverlay();
             if (res.status === "success") {
-                alert("บันทึกข้อมูลเรียบร้อยแล้ว!");
+                alert(`บันทึกข้อมูลเรียบร้อย!`);
                 location.reload();
             } else {
                 alert("เกิดข้อผิดพลาด: " + (res.message || "ไม่สามารถบันทึกข้อมูลได้"));
@@ -499,7 +502,7 @@
         })
         .catch(err => {
             hideLoadingOverlay();
-            alert("บันทึกข้อมูลสำเร็จ!");
+            alert(`บันทึกข้อมูลเรียบร้อย!`);
             location.reload();
         });
     }
