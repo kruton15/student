@@ -430,23 +430,11 @@
         container.innerHTML = html;
     }
 
-    // คำนวณฐานนิยม โดยหากความถี่เท่ากัน จะใช้ค่าสูงสุด
-    function calculateMode(numbers) {
-        const freq = {};
-        let maxFreq = 0;
-        let mode = numbers[0];
-
-        numbers.forEach(num => {
-            freq[num] = (freq[num] || 0) + 1;
-            if (freq[num] > maxFreq) {
-                maxFreq = freq[num];
-                mode = num;
-            } else if (freq[num] === maxFreq) {
-                if (num > mode) mode = num; 
-            }
-        });
-
-        return mode;
+    // คำนวณค่าเฉลี่ยเป็นจำนวนเต็ม (Rounded Integer Average)
+    function calculateAverage(numbers) {
+        if (!numbers || numbers.length === 0) return 0;
+        const sum = numbers.reduce((acc, curr) => acc + curr, 0);
+        return Math.round(sum / numbers.length);
     }
 
     function submitEvaluation() {
@@ -459,8 +447,8 @@
         const term = getCurrentTerm();
         showLoadingOverlay(`กำลังบันทึกข้อมูล...`);
 
-        let rawScores = [];   // เก็บผลประเมินรายข้อทั้งหมด 26 ข้อ (สำหรับ Col 4-29)
-        let domainModes = []; // เก็บค่าฐานนิยมแยก 8 ด้าน (สำหรับ Col 30-37)
+        let rawScores = [];      // เก็บผลประเมินรายข้อทั้งหมด 26 ข้อ (สำหรับ Col 4-29)
+        let domainAverages = []; // เก็บค่าเฉลี่ยจำนวนเต็มแยก 8 ด้าน (สำหรับ Col 30-37)
 
         evaluationData.forEach((domain, dIdx) => {
             let domainScores = [];
@@ -472,17 +460,17 @@
                     domainScores.push(score);
                 }
             });
-            domainModes.push(calculateMode(domainScores));
+            domainAverages.push(calculateAverage(domainScores));
         });
 
-        const overallMode = calculateMode(domainModes); // ฐานนิยมภาพรวม (สำหรับ Col 38)
+        const overallAverage = calculateAverage(domainAverages); // ค่าเฉลี่ยภาพรวม (สำหรับ Col 38)
 
         const payload = {
             row: selectedStudent.row,
             term: term,
             rawScores: rawScores,
-            domainModes: domainModes,
-            overallMode: overallMode
+            domainModes: domainAverages, // ส่งค่าเฉลี่ยไปยังตัวแปรเดิมเพื่อรองรับกับฝั่ง GAS
+            overallMode: overallAverage  // ส่งค่าเฉลี่ยไปยังตัวแปรเดิมเพื่อรองรับกับฝั่ง GAS
         };
 
         fetch(WEB_APP_URL, {
