@@ -237,7 +237,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // ** ใส่ Web App URL ของคุณที่ได้จากการ Deploy GAS **
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxU0cGd2usshLA_ojpo550YwzQJLRbfdEcjE7j025HaFaVZIT2LHzKEhqwUkfSCKlp6zQ/exec";
 
     let studentsData = [];
@@ -351,7 +350,7 @@
     }
 
     function getCurrentTerm() {
-        const month = new Date().getMonth(); // 0 = ม.ค., 4 = พ.ค., 9 = ต.ค., 10 = พ.ย.
+        const month = new Date().getMonth();
         return (month >= 4 && month <= 9) ? 1 : 2;
     }
 
@@ -430,13 +429,6 @@
         container.innerHTML = html;
     }
 
-    // คำนวณค่าเฉลี่ยเป็นจำนวนเต็ม (Rounded Integer Average)
-    function calculateAverage(numbers) {
-        if (!numbers || numbers.length === 0) return 0;
-        const sum = numbers.reduce((acc, curr) => acc + curr, 0);
-        return Math.round(sum / numbers.length);
-    }
-
     function submitEvaluation() {
         const form = document.getElementById('eval-form');
         if (!form.checkValidity()) {
@@ -447,30 +439,21 @@
         const term = getCurrentTerm();
         showLoadingOverlay(`กำลังบันทึกข้อมูล...`);
 
-        let rawScores = [];      // เก็บผลประเมินรายข้อทั้งหมด 26 ข้อ (สำหรับ Col 4-29)
-        let domainAverages = []; // เก็บค่าเฉลี่ยจำนวนเต็มแยก 8 ด้าน (สำหรับ Col 30-37)
+        let rawScores = [];
 
         evaluationData.forEach((domain, dIdx) => {
-            let domainScores = [];
             domain.items.forEach((item, iIdx) => {
                 const checkedRadio = document.querySelector(`input[name="d${dIdx}_q${iIdx}"]:checked`);
                 if (checkedRadio) {
-                    const score = parseInt(checkedRadio.value);
-                    rawScores.push(score);
-                    domainScores.push(score);
+                    rawScores.push(parseInt(checkedRadio.value));
                 }
             });
-            domainAverages.push(calculateAverage(domainScores));
         });
-
-        const overallAverage = calculateAverage(domainAverages); // ค่าเฉลี่ยภาพรวม (สำหรับ Col 38)
 
         const payload = {
             row: selectedStudent.row,
             term: term,
-            rawScores: rawScores,
-            domainModes: domainAverages, // ส่งค่าเฉลี่ยไปยังตัวแปรเดิมเพื่อรองรับกับฝั่ง GAS
-            overallMode: overallAverage  // ส่งค่าเฉลี่ยไปยังตัวแปรเดิมเพื่อรองรับกับฝั่ง GAS
+            rawScores: rawScores
         };
 
         fetch(WEB_APP_URL, {
@@ -490,8 +473,7 @@
         })
         .catch(err => {
             hideLoadingOverlay();
-            alert(`บันทึกข้อมูลเรียบร้อย!`);
-            location.reload();
+            alert("เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย กรุณาลองใหม่อีกครั้ง");
         });
     }
 </script>
